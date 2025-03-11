@@ -1,7 +1,7 @@
 const Config = {
     BLOCK_SIZE: 20,
-    CANVAS_WIDTH: 400, // Увеличено поле
-    CANVAS_HEIGHT: 600, // Увеличено поле
+    CANVAS_WIDTH: 400,
+    CANVAS_HEIGHT: 600,
     INITIAL_SPEED: 150,
     GOLDEN_SPEED_BOOST: 10,
     MAX_LEADERBOARD: 5,
@@ -127,7 +127,7 @@ const Render = {
 
 const Game = {
     state: {
-        snake: [{ x: 10, y: 15 }], // Начальная позиция адаптирована под новое поле
+        snake: [{ x: 10, y: 15 }],
         food: { x: 20, y: 20, type: 'normal', spawnTime: 0 },
         obstacles: [],
         direction: 'right',
@@ -159,7 +159,7 @@ const Game = {
         this.ui.backBtn = document.getElementById('backBtn');
         Render.init(this.ctx);
         this.loadLeaderboard();
-        this.loadLocalScore(); // Загружаем локальный счёт
+        this.loadLocalScore(); // Загружаем счёт только для отображения
         this.reset();
         this.bindEvents();
         this.setupTelegram();
@@ -192,8 +192,11 @@ const Game = {
 
     loadLocalScore() {
         const savedScore = localStorage.getItem(`snakeScore_${this.player.id}`);
-        if (savedScore) this.state.score = parseInt(savedScore, 10);
-        this.ui.score.textContent = this.state.score;
+        if (savedScore) {
+            this.ui.score.textContent = savedScore; // Показываем сохранённый счёт для информации
+        } else {
+            this.ui.score.textContent = this.state.score; // Иначе 0
+        }
     },
 
     saveLocalScore() {
@@ -203,7 +206,8 @@ const Game = {
     reset() {
         this.state.snake = [{ x: 10, y: 15 }];
         this.state.direction = 'right';
-        this.state.obstacles = this.generateObstacles(5); // Увеличим препятствия
+        this.state.score = 0; // Сбрасываем счёт при новой игре
+        this.state.obstacles = this.generateObstacles(5);
         clearTimeout(this.state.foodTimer);
         this.createFood();
         this.state.gameActive = false;
@@ -285,7 +289,7 @@ const Game = {
                 }
             }
             this.ui.score.textContent = this.state.score;
-            this.saveLocalScore(); // Сохраняем локально
+            this.saveLocalScore();
             clearTimeout(this.state.foodTimer);
             this.createFood();
         } else {
@@ -328,8 +332,8 @@ const Game = {
     gameOver() {
         this.state.gameActive = false;
         clearTimeout(this.state.foodTimer);
-        this.saveScore(); // Сохраняем в MongoDB
-        this.saveLocalScore(); // Сохраняем локально
+        this.saveScore();
+        this.saveLocalScore();
         this.ui.finalScore.textContent = this.state.score;
         this.ui.gameOverScreen.classList.remove('hidden');
         this.ui.startBtn.classList.add('hidden');
