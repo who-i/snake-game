@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 
 exports.handler = async (event) => {
     const { id, name, score } = JSON.parse(event.body);
-    const uri = process.env.MONGODB_URI; // Будет задано в Netlify
+    const uri = process.env.MONGODB_URI;
     const client = new MongoClient(uri);
 
     try {
