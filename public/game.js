@@ -1,7 +1,7 @@
 const Config = {
     BLOCK_SIZE: 20,
-    CANVAS_WIDTH: 320,
-    CANVAS_HEIGHT: 320,
+    CANVAS_WIDTH: 400, // Увеличено поле
+    CANVAS_HEIGHT: 600, // Увеличено поле
     INITIAL_SPEED: 150,
     GOLDEN_SPEED_BOOST: 10,
     MAX_LEADERBOARD: 5,
@@ -127,8 +127,8 @@ const Render = {
 
 const Game = {
     state: {
-        snake: [{ x: 5, y: 5 }],
-        food: { x: 10, y: 10, type: 'normal', spawnTime: 0 },
+        snake: [{ x: 10, y: 15 }], // Начальная позиция адаптирована под новое поле
+        food: { x: 20, y: 20, type: 'normal', spawnTime: 0 },
         obstacles: [],
         direction: 'right',
         score: 0,
@@ -136,7 +136,7 @@ const Game = {
         gameSpeed: Config.INITIAL_SPEED,
         lastUpdate: 0,
         foodTimer: null,
-        blink: 0 // Для эффекта мигания
+        blink: 0
     },
     canvas: null,
     ctx: null,
@@ -156,8 +156,10 @@ const Game = {
         this.ui.startBtn = document.getElementById('startBtn');
         this.ui.restartBtn = document.getElementById('restartBtn');
         this.ui.leaderboardBtn = document.getElementById('leaderboardBtn');
+        this.ui.backBtn = document.getElementById('backBtn');
         Render.init(this.ctx);
-        this.loadLeaderboard(); // Загружаем лидерборд при старте
+        this.loadLeaderboard();
+        this.loadLocalScore(); // Загружаем локальный счёт
         this.reset();
         this.bindEvents();
         this.setupTelegram();
@@ -175,6 +177,8 @@ const Game = {
         this.ui.restartBtn.style.color = tg.themeParams.button_text_color || '#ffffff';
         this.ui.leaderboardBtn.style.background = tg.themeParams.button_color || 'linear-gradient(45deg, #e74c3c, #c0392b)';
         this.ui.leaderboardBtn.style.color = tg.themeParams.button_text_color || '#ffffff';
+        this.ui.backBtn.style.background = tg.themeParams.button_color || 'linear-gradient(45deg, #e74c3c, #c0392b)';
+        this.ui.backBtn.style.color = tg.themeParams.button_text_color || '#ffffff';
         tg.MainButton.setText('Share Score');
         tg.MainButton.onClick(() => this.shareScore());
         tg.MainButton.hide();
@@ -186,12 +190,20 @@ const Game = {
         tg.sendData(JSON.stringify({ action: 'share', score: this.state.score, message }));
     },
 
+    loadLocalScore() {
+        const savedScore = localStorage.getItem(`snakeScore_${this.player.id}`);
+        if (savedScore) this.state.score = parseInt(savedScore, 10);
+        this.ui.score.textContent = this.state.score;
+    },
+
+    saveLocalScore() {
+        localStorage.setItem(`snakeScore_${this.player.id}`, this.state.score);
+    },
+
     reset() {
-        this.state.snake = [{ x: 5, y: 5 }];
+        this.state.snake = [{ x: 10, y: 15 }];
         this.state.direction = 'right';
-        this.state.score = 0;
-        this.state.gameSpeed = Config.INITIAL_SPEED;
-        this.state.obstacles = this.generateObstacles(3);
+        this.state.obstacles = this.generateObstacles(5); // Увеличим препятствия
         clearTimeout(this.state.foodTimer);
         this.createFood();
         this.state.gameActive = false;
@@ -200,6 +212,7 @@ const Game = {
         this.ui.startBtn.classList.remove('hidden');
         this.ui.restartBtn.classList.add('hidden');
         this.ui.leaderboardBtn.classList.remove('hidden');
+        this.ui.backBtn.classList.add('hidden');
         window.Telegram.WebApp.MainButton.hide();
         this.render();
     },
@@ -207,7 +220,10 @@ const Game = {
     generateObstacles(count) {
         const obs = [];
         while (obs.length < count) {
-            const newObs = { x: Math.floor(Math.random() * (Config.CANVAS_WIDTH / Config.BLOCK_SIZE)), y: Math.floor(Math.random() * (Config.CANVAS_HEIGHT / Config.BLOCK_SIZE)) };
+            const newObs = {
+                x: Math.floor(Math.random() * (Config.CANVAS_WIDTH / Config.BLOCK_SIZE)),
+                y: Math.floor(Math.random() * (Config.CANVAS_HEIGHT / Config.BLOCK_SIZE))
+            };
             if (!this.state.snake.some(s => s.x === newObs.x && s.y === newObs.y) && !(newObs.x === this.state.food.x && newObs.y === this.state.food.y)) obs.push(newObs);
         }
         return obs;
@@ -259,7 +275,7 @@ const Game = {
             else if (this.state.food.type === 'golden') {
                 this.state.score += 5;
                 this.state.gameSpeed = Math.max(50, this.state.gameSpeed - Config.GOLDEN_SPEED_BOOST);
-                this.state.blink = 10; // Запускаем мигание на 10 кадров
+                this.state.blink = 10;
             } else if (this.state.food.type === 'poison') {
                 this.state.score = Math.max(0, this.state.score - 2);
                 if (this.state.snake.length > 1) this.state.snake.splice(-1, 1);
@@ -269,6 +285,7 @@ const Game = {
                 }
             }
             this.ui.score.textContent = this.state.score;
+            this.saveLocalScore(); // Сохраняем локально
             clearTimeout(this.state.foodTimer);
             this.createFood();
         } else {
@@ -304,18 +321,21 @@ const Game = {
             this.ui.startBtn.classList.add('hidden');
             this.ui.restartBtn.classList.remove('hidden');
             this.ui.leaderboardBtn.classList.add('hidden');
+            this.ui.backBtn.classList.add('hidden');
         }
     },
 
     gameOver() {
         this.state.gameActive = false;
         clearTimeout(this.state.foodTimer);
-        this.saveScore();
+        this.saveScore(); // Сохраняем в MongoDB
+        this.saveLocalScore(); // Сохраняем локально
         this.ui.finalScore.textContent = this.state.score;
         this.ui.gameOverScreen.classList.remove('hidden');
         this.ui.startBtn.classList.add('hidden');
         this.ui.restartBtn.classList.remove('hidden');
-        this.ui.leaderboardBtn.classList.add('hidden');
+        this.ui.leaderboardBtn.classList.remove('hidden');
+        this.ui.backBtn.classList.remove('hidden');
         const tg = window.Telegram.WebApp;
         tg.showAlert(`Game Over! Your score: ${this.state.score}`);
         tg.MainButton.show();
@@ -349,20 +369,25 @@ const Game = {
     },
 
     showLeaderboard() {
-        if (!this.state.gameActive) {
-            this.updateLeaderboard();
-            this.ui.gameOverScreen.classList.remove('hidden');
-            this.ui.finalScore.textContent = this.state.score;
-            this.ui.startBtn.classList.add('hidden');
-            this.ui.restartBtn.classList.remove('hidden');
-            this.ui.leaderboardBtn.classList.add('hidden');
-        }
+        this.loadLeaderboard();
+        this.ui.gameOverScreen.classList.remove('hidden');
+        this.ui.startBtn.classList.add('hidden');
+        this.ui.restartBtn.classList.add('hidden');
+        this.ui.leaderboardBtn.classList.add('hidden');
+        this.ui.backBtn.classList.remove('hidden');
     },
 
     bindEvents() {
         this.ui.startBtn.addEventListener('click', (e) => { e.preventDefault(); this.start(); });
         this.ui.restartBtn.addEventListener('click', (e) => { e.preventDefault(); this.reset(); this.start(); });
         this.ui.leaderboardBtn.addEventListener('click', (e) => { e.preventDefault(); this.showLeaderboard(); });
+        this.ui.backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.ui.gameOverScreen.classList.add('hidden');
+            this.ui.startBtn.classList.remove('hidden');
+            this.ui.leaderboardBtn.classList.remove('hidden');
+            this.ui.backBtn.classList.add('hidden');
+        });
 
         document.addEventListener('keydown', (e) => {
             if (!this.state.gameActive) return;

@@ -6,20 +6,106 @@
     <title>Snake Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; flex-direction: column; height: 100vh; width: 100vw; background: linear-gradient(135deg, #2a5298, #1e3c72); color: #ffffff; font-family: 'Arial', sans-serif; overflow: hidden; }
-        canvas { border: 2px solid #ffffff; border-radius: 15px; box-shadow: 0 0 30px rgba(255, 255, 255, 0.3); margin: 10px; background: radial-gradient(circle, #2c3e50, #1a252f); width: 100%; max-width: 320px; height: auto; max-height: 320px; }
-        .score { font-size: 28px; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); font-family: 'Courier New', monospace; }
-        .controls { margin-top: 20px; display: flex; gap: 15px; z-index: 15; }
-        .btn { background: linear-gradient(45deg, #e74c3c, #c0392b); color: #ffffff; border: none; padding: 12px 25px; border-radius: 30px; cursor: pointer; font-size: 18px; font-weight: bold; box-shadow: 0 5px 15px rgba(231, 76, 60, 0.5); transition: transform 0.2s, box-shadow 0.2s; }
-        .btn:hover { transform: scale(1.05); box-shadow: 0 8px 20px rgba(231, 76, 60, 0.7); }
-        .btn:active { transform: scale(0.95); }
-        .hidden { display: none !important; }
-        .game-over { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 10; animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .game-over-text { font-size: 48px; text-shadow: 0 0 15px #e74c3c, 0 0 30px #c0392b; font-family: 'Courier New', monospace; }
-        .leaderboard-container { margin-top: 25px; background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 10px; max-height: 200px; overflow-y: auto; text-align: left; box-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
-        .leaderboard-container h3 { margin: 0 0 10px; font-size: 20px; }
-        .leaderboard-container p { margin: 5px 0; font-size: 16px; }
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            border: 2px solid #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            margin: 10px;
+            background: radial-gradient(circle, #2c3e50, #1a252f);
+            max-width: 100%;
+            max-height: 80vh; /* Ограничиваем высоту под экран */
+            width: auto;
+            height: auto;
+        }
+        .score {
+            font-size: 28px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            font-family: 'Courier New', monospace;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 15;
+        }
+        .btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: #ffffff;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.7);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .hidden {
+            display: none !important;
+        }
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .game-over-text {
+            font-size: 48px;
+            text-shadow: 0 0 15px #e74c3c, 0 0 30px #c0392b;
+            font-family: 'Courier New', monospace;
+        }
+        .leaderboard-container {
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+        .leaderboard-container h3 {
+            margin: 0 0 10px;
+            font-size: 20px;
+        }
+        .leaderboard-container p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -29,6 +115,7 @@
         <button class="btn" id="startBtn">Start Game</button>
         <button class="btn hidden" id="restartBtn">Restart</button>
         <button class="btn" id="leaderboardBtn">Leaderboard</button>
+        <button class="btn hidden" id="backBtn">Back to Menu</button>
     </div>
     <div class="game-over hidden" id="gameOverScreen">
         <div class="game-over-text">Game Over</div>
