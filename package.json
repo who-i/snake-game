@@ -1,0 +1,7 @@
+{
+  "name": "snake-game",
+  "version": "1.0.0",
+  "dependencies": {
+    "mongodb": "^4.0.0"
+  }
+}

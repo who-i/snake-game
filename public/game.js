@@ -144,23 +144,23 @@ const Game = {
     player: { id: 'guest', name: 'Player' },
 
     init() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = Config.CANVAS_WIDTH;
-        this.canvas.height = Config.CANVAS_HEIGHT;
-        this.ui.score = document.getElementById('score');
-        this.ui.finalScore = document.getElementById('finalScore');
-        this.ui.gameOverScreen = document.getElementById('gameOverScreen');
-        this.ui.leaderboard = document.getElementById('leaderboard');
-        this.ui.startBtn = document.getElementById('startBtn');
-        this.ui.restartBtn = document.getElementById('restartBtn');
-        this.ui.leaderboardBtn = document.getElementById('leaderboardBtn');
-        Render.init(this.ctx);
-        this.loadLeaderboard();
-        this.reset();
-        this.bindEvents();
-        this.setupTelegram();
-    },
+    this.canvas = document.getElementById('gameCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.canvas.width = Config.CANVAS_WIDTH;
+    this.canvas.height = Config.CANVAS_HEIGHT;
+    this.ui.score = document.getElementById('score');
+    this.ui.finalScore = document.getElementById('finalScore');
+    this.ui.gameOverScreen = document.getElementById('gameOverScreen');
+    this.ui.leaderboard = document.getElementById('leaderboard');
+    this.ui.startBtn = document.getElementById('startBtn');
+    this.ui.restartBtn = document.getElementById('restartBtn');
+    this.ui.leaderboardBtn = document.getElementById('leaderboardBtn');
+    Render.init(this.ctx);
+    this.loadLeaderboard(); // Загружаем лидерборд при старте
+    this.reset();
+    this.bindEvents();
+    this.setupTelegram();
+},
 
     setupTelegram() {
         const tg = window.Telegram.WebApp;
@@ -314,23 +314,28 @@ const Game = {
         tg.MainButton.show();
     },
 
-    saveScore() {
-        const playerScore = { id: this.player.id, name: this.player.name, score: this.state.score };
-        const existing = this.leaderboard.findIndex(e => e.id === this.player.id);
-        if (existing !== -1 && this.leaderboard[existing].score < this.state.score) this.leaderboard[existing].score = this.state.score;
-        else if (existing === -1) this.leaderboard.push(playerScore);
-        this.leaderboard.sort((a, b) => b.score - a.score).splice(Config.MAX_LEADERBOARD);
-        localStorage.setItem('snakeLeaderboard', JSON.stringify(this.leaderboard));
-        this.updateLeaderboard();
-        // Для будущего: отправка на сервер
-        // fetch('/.netlify/functions/saveScore', { method: 'POST', body: JSON.stringify(playerScore) });
-    },
+   saveScore() {
+    const playerScore = { id: this.player.id, name: this.player.name, score: this.state.score };
+    fetch('/.netlify/functions/saveScore', {
+        method: 'POST',
+        body: JSON.stringify(playerScore),
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error('Error saving score:', error));
+    this.loadLeaderboard(); // Обновляем лидерборд после сохранения
+},
 
     loadLeaderboard() {
-        this.leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard')) || [];
-        // Для будущего: загрузка с сервера
-        // fetch('/.netlify/functions/getLeaderboard').then(res => res.json()).then(data => this.leaderboard = data);
-    },
+    fetch('/.netlify/functions/getLeaderboard')
+        .then(response => response.json())
+        .then(data => {
+            this.leaderboard = data;
+            this.updateLeaderboard();
+        })
+        .catch(error => console.error('Error loading leaderboard:', error));
+},
 
     updateLeaderboard() {
         this.ui.leaderboard.innerHTML = '<h3>Leaderboard</h3>' + this.leaderboard.map((e, i) => `<p>${i + 1}. ${e.name}: ${e.score}</p>`).join('');

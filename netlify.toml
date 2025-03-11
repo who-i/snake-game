@@ -1,6 +1,6 @@
 [build]
   publish = "public"
-  command = "echo 'No build required'"
+  command = "npm install"
 
 [functions]
-  directory = "functions" # Для будущих серверных функций
+  directory = "functions"
