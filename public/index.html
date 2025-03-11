@@ -13,12 +13,12 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            height: 100vh;
+            min-height: 100vh; /* Изменено с height на min-height */
             width: 100vw;
             background: linear-gradient(135deg, #2a5298, #1e3c72);
             color: #ffffff;
             font-family: 'Arial', sans-serif;
-            overflow: hidden;
+            overflow-y: auto; /* Добавлено, чтобы можно было прокручивать */
         }
         canvas {
             border: 2px solid #ffffff;
@@ -27,7 +27,7 @@
             margin: 10px;
             background: radial-gradient(circle, #2c3e50, #1a252f);
             max-width: 100%;
-            max-height: 80vh; /* Ограничиваем высоту под экран */
+            max-height: 70vh; /* Уменьшено с 80vh до 70vh */
             width: auto;
             height: auto;
         }
@@ -38,19 +38,21 @@
             font-family: 'Courier New', monospace;
         }
         .controls {
-            margin-top: 20px;
+            margin-top: 10px; /* Уменьшено с 20px */
             display: flex;
-            gap: 15px;
+            flex-wrap: wrap; /* Добавлено, чтобы кнопки переносились на маленьких экранах */
+            gap: 10px; /* Уменьшено с 15px */
             z-index: 15;
+            justify-content: center; /* Добавлено для центрирования */
         }
         .btn {
             background: linear-gradient(45deg, #e74c3c, #c0392b);
             color: #ffffff;
             border: none;
-            padding: 12px 25px;
+            padding: 10px 20px; /* Уменьшено с 12px 25px */
             border-radius: 30px;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 16px; /* Уменьшено с 18px */
             font-weight: bold;
             box-shadow: 0 5px 15px rgba(231, 76, 60, 0.5);
             transition: transform 0.2s, box-shadow 0.2s;
@@ -66,7 +68,7 @@
             display: none !important;
         }
         .game-over {
-            position: absolute;
+            position: fixed; /* Изменено с absolute на fixed */
             top: 0;
             left: 0;
             width: 100%;
@@ -89,9 +91,9 @@
             font-family: 'Courier New', monospace;
         }
         .leaderboard-container {
-            margin-top: 25px;
+            margin-top: 20px; /* Уменьшено с 25px */
             background: rgba(255, 255, 255, 0.15);
-            padding: 15px;
+            padding: 10px; /* Уменьшено с 15px */
             border-radius: 10px;
             max-height: 200px;
             overflow-y: auto;
@@ -105,6 +107,19 @@
         .leaderboard-container p {
             margin: 5px 0;
             font-size: 16px;
+        }
+        @media (max-height: 600px) { /* Добавлено для маленьких экранов */
+            canvas {
+                max-height: 60vh;
+            }
+            .score {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+            .btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -124,4 +139,4 @@
     </div>
     <script src="/game.js"></script>
 </body>
-</html> 
+</html>

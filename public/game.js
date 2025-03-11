@@ -1,7 +1,7 @@
 const Config = {
     BLOCK_SIZE: 20,
     CANVAS_WIDTH: 400,
-    CANVAS_HEIGHT: 600,
+    CANVAS_HEIGHT: 500, // Уменьшено с 600 до 500
     INITIAL_SPEED: 150,
     GOLDEN_SPEED_BOOST: 10,
     MAX_LEADERBOARD: 5,
@@ -159,7 +159,7 @@ const Game = {
         this.ui.backBtn = document.getElementById('backBtn');
         Render.init(this.ctx);
         this.loadLeaderboard();
-        this.loadLocalScore(); // Загружаем счёт только для отображения
+        this.loadLocalScore();
         this.reset();
         this.bindEvents();
         this.setupTelegram();
@@ -193,9 +193,9 @@ const Game = {
     loadLocalScore() {
         const savedScore = localStorage.getItem(`snakeScore_${this.player.id}`);
         if (savedScore) {
-            this.ui.score.textContent = savedScore; // Показываем сохранённый счёт для информации
+            this.ui.score.textContent = savedScore;
         } else {
-            this.ui.score.textContent = this.state.score; // Иначе 0
+            this.ui.score.textContent = this.state.score;
         }
     },
 
@@ -206,7 +206,7 @@ const Game = {
     reset() {
         this.state.snake = [{ x: 10, y: 15 }];
         this.state.direction = 'right';
-        this.state.score = 0; // Сбрасываем счёт при новой игре
+        this.state.score = 0;
         this.state.obstacles = this.generateObstacles(5);
         clearTimeout(this.state.foodTimer);
         this.createFood();
@@ -329,10 +329,10 @@ const Game = {
         }
     },
 
-    gameOver() {
+    async gameOver() {
         this.state.gameActive = false;
         clearTimeout(this.state.foodTimer);
-        this.saveScore();
+        await this.saveScore(); // Ждём сохранения очков
         this.saveLocalScore();
         this.ui.finalScore.textContent = this.state.score;
         this.ui.gameOverScreen.classList.remove('hidden');
@@ -345,35 +345,41 @@ const Game = {
         tg.MainButton.show();
     },
 
-    saveScore() {
+    async saveScore() {
         const playerScore = { id: this.player.id, name: this.player.name, score: this.state.score };
-        fetch('/.netlify/functions/saveScore', {
-            method: 'POST',
-            body: JSON.stringify(playerScore),
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(data => console.log('Score saved:', data))
-        .catch(error => console.error('Error saving score:', error));
-        this.loadLeaderboard();
+        try {
+            const response = await fetch('/.netlify/functions/saveScore', {
+                method: 'POST',
+                body: JSON.stringify(playerScore),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            console.log('Score saved:', data);
+            await this.loadLeaderboard(); // Ждём обновления лидерборда
+        } catch (error) {
+            console.error('Error saving score:', error);
+        }
     },
 
-    loadLeaderboard() {
-        fetch('/.netlify/functions/getLeaderboard')
-            .then(response => response.json())
-            .then(data => {
-                this.leaderboard = data || [];
-                this.updateLeaderboard();
-            })
-            .catch(error => console.error('Error loading leaderboard:', error));
+    async loadLeaderboard() {
+        try {
+            const response = await fetch('/.netlify/functions/getLeaderboard');
+            const data = await response.json();
+            this.leaderboard = data || [];
+            this.updateLeaderboard();
+        } catch (error) {
+            console.error('Error loading leaderboard:', error);
+            this.leaderboard = [];
+            this.updateLeaderboard();
+        }
     },
 
     updateLeaderboard() {
         this.ui.leaderboard.innerHTML = '<h3>Leaderboard</h3>' + this.leaderboard.map((e, i) => `<p>${i + 1}. ${e.name}: ${e.score}</p>`).join('');
     },
 
-    showLeaderboard() {
-        this.loadLeaderboard();
+    async showLeaderboard() {
+        await this.loadLeaderboard(); // Ждём загрузки лидерборда
         this.ui.gameOverScreen.classList.remove('hidden');
         this.ui.startBtn.classList.add('hidden');
         this.ui.restartBtn.classList.add('hidden');
