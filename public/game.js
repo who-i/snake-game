@@ -421,3 +421,4 @@ document.addEventListener('DOMContentLoaded', () => {
     Game.player.name = tg.initDataUnsafe.user?.first_name || 'Player';
     Game.init();
 });
+<!-- Test change -->
