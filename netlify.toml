@@ -3,4 +3,4 @@
   command = "npm install"
 
 [functions]
-  directory = "functions" <!-- Test change -->
+  directory = "functions"
